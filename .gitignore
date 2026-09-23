@@ -1,0 +1,11 @@
+.buildozer/
+bin/
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.idea/
+.vscode/
+.DS_Store
+optimizer_output/
