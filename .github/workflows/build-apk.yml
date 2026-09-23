@@ -3,11 +3,9 @@ name: Build Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [ main, master ]
-    paths:
-      - '**.py'
-      - 'buildozer.spec'
-      - '.github/workflows/build-apk.yml'
+    branches:
+      - main
+      - master
 
 jobs:
   build:
@@ -16,44 +14,60 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Setup Python
+        uses: actions/setup-python@v7
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
-      - name: Install system dependencies
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Instalar dependencias Linux
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            git zip unzip openjdk-17-jdk python3-pip autoconf automake libtool \
-            pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 \
-            cmake libffi-dev libssl-dev
+            git zip unzip \
+            autoconf automake libtool libltdl-dev \
+            pkg-config cmake \
+            zlib1g-dev \
+            libncurses5-dev libncursesw5-dev libtinfo5 \
+            libffi-dev libssl-dev
 
-      - name: Install Buildozer
+      - name: Instalar Buildozer
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install cython==0.29.34 setuptools pytest pillow
-          python -m pip install git+https://github.com/kivy/buildozer
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install "Cython>=0.29,<3.1"
+          python -m pip install buildozer
+          buildozer --version
 
-      - name: Test core
-        run: PYTHONPATH=. pytest -q
+      - name: Probar núcleo Python
+        run: |
+          python -m pip install pytest pillow
+          PYTHONPATH=. pytest -q
 
-      - name: Cache Buildozer
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.buildozer
-            .buildozer
-          key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
-          restore-keys: |
-            buildozer-${{ runner.os }}-
+      - name: Limpiar compilación anterior
+        run: |
+          rm -rf .buildozer
+          rm -rf bin
 
       - name: Build debug APK
-        run: buildozer -v android debug
+        env:
+          PYTHONFORANDROID_PREREQUISITES_INSTALL_INTERACTIVE: "0"
+        run: |
+          buildozer -v android debug
+
+      - name: Mostrar APK generado
+        if: success()
+        run: |
+          find bin -type f -maxdepth 2 -print
 
       - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: FNF-Optimizer-APK
