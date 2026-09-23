@@ -1,6 +1,6 @@
 # FNF Optimizer APK
 
-Proyecto Android basado en las rutinas del optimizador de mods para **FNF V-Slice / Psych Engine**. Esta versión reemplaza el menú de terminal por una interfaz Kivy y está preparada para compilarse con Buildozer o GitHub Actions.
+Proyecto Android basado en las rutinas del optimizador de mods para **FNF V-Slice / Psych Engine**. Esta versión reemplaza el menú de terminal por una interfaz Kivy y está preparada para compilarse con Buildozer o GitHub Actions. La compilación Android fija Python 3.13.15 y Kivy 2.3.1 para evitar que `python-for-android` use por defecto una versión de Python más nueva que la soportada oficialmente por Kivy 2.3.1.
 
 ## Qué incluye
 
@@ -37,6 +37,8 @@ Proyecto Android basado en las rutinas del optimizador de mods para **FNF V-Slic
 4. Pulsa **Run workflow**.
 5. Cuando termine, abre la ejecución y descarga el artefacto **FNF-Optimizer-APK**.
 
+Si la compilación falla, el workflow intenta subir el artefacto **buildozer-failure-log** con `buildozer-build.log` para facilitar el diagnóstico.
+
 También se compila automáticamente con cada `push` a `main` o `master` que modifique el código del APK.
 
 ## Compilar localmente en Ubuntu / WSL2
@@ -44,7 +46,7 @@ También se compila automáticamente con cada `push` a `main` o `master` que mod
 Instala las dependencias de Buildozer y luego ejecuta:
 
 ```bash
-python3 -m pip install --user "cython<3" buildozer
+python3 -m pip install --user "Cython==3.0.12" buildozer
 buildozer -v android debug
 ```
 

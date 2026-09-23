@@ -6,7 +6,7 @@ source.dir = .
 source.include_exts = py,txt,md,spec
 source.exclude_dirs = .git,.github,.buildozer,bin,legacy_cli,tests
 version = 0.1.0
-requirements = python3,kivy,pillow
+requirements = python3==3.13.15,hostpython3==3.13.15,kivy==2.3.1,pillow
 orientation = portrait
 fullscreen = 0
 
@@ -17,6 +17,8 @@ android.minapi = 23
 android.ndk = 28c
 android.archs = arm64-v8a
 android.accept_sdk_license = True
+
+# Usa la rama activa de python-for-android con soporte actualizado de Android/NDK.
 p4a.branch = develop
 
 [buildozer]
