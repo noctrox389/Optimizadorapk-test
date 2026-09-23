@@ -6,6 +6,11 @@ on:
     branches:
       - main
       - master
+    paths:
+      - "**.py"
+      - "requirements.txt"
+      - "buildozer.spec"
+      - ".github/workflows/build-apk.yml"
 
 jobs:
   build:
@@ -14,20 +19,20 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v7
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Setup Java
-        uses: actions/setup-java@v6
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
 
-      - name: Instalar dependencias Linux
+      - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -38,33 +43,34 @@ jobs:
             libncurses5-dev libncursesw5-dev libtinfo5 \
             libffi-dev libssl-dev
 
-      - name: Instalar Buildozer
+      - name: Install Buildozer
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          python -m pip install "Cython>=0.29,<3.1"
-          python -m pip install buildozer
+          python -m pip install "Cython==3.0.12"
+          python -m pip install buildozer pytest pillow
           buildozer --version
 
-      - name: Probar núcleo Python
-        run: |
-          python -m pip install pytest pillow
-          PYTHONPATH=. pytest -q
+      - name: Test core
+        run: PYTHONPATH=. pytest -q
 
-      - name: Limpiar compilación anterior
+      # Sin cache durante la fase de depuración: evita reutilizar builds rotos.
+      - name: Clean previous build
         run: |
           rm -rf .buildozer
           rm -rf bin
+          rm -f buildozer-build.log
 
       - name: Build debug APK
         env:
           PYTHONFORANDROID_PREREQUISITES_INSTALL_INTERACTIVE: "0"
+        shell: bash
         run: |
-          buildozer -v android debug
+          set -o pipefail
+          buildozer -v android debug 2>&1 | tee buildozer-build.log
 
-      - name: Mostrar APK generado
+      - name: Show generated APK
         if: success()
-        run: |
-          find bin -type f -maxdepth 2 -print
+        run: find bin -maxdepth 2 -type f -print
 
       - name: Upload APK
         if: success()
@@ -73,3 +79,11 @@ jobs:
           name: FNF-Optimizer-APK
           path: bin/*.apk
           if-no-files-found: error
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: buildozer-failure-log
+          path: buildozer-build.log
+          if-no-files-found: warn
